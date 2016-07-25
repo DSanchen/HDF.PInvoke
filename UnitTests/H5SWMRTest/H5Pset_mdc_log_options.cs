@@ -14,54 +14,39 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using HDF.PInvoke;
 
+using hbool_t = System.UInt32;
 using herr_t = System.Int32;
-using hsize_t = System.UInt64;
-using hssize_t = System.Int64;
+
 
 #if HDF5_VER1_10
+
 using hid_t = System.Int64;
-#else
-using hid_t = System.Int32;
-#endif
 
 namespace UnitTests
 {
-    public partial class H5STest
+    public partial class H5SWMRTest
     {
         [TestMethod]
-        public void H5Sselect_hyperslabTest1()
+        public void H5Fset_mdc_log_optionsTestSWMR1()
         {
-            hsize_t[] dims = { 10, 20, 30 };
-            hid_t space =  H5S.create_simple(dims.Length, dims, dims);
-            Assert.IsTrue(space > 0);
-            hsize_t[] start = { 0, 0, 0 };
-            hsize_t[] count = { 1, 1, 1 };
-            hsize_t[] block = { 1, 2, 3 };
+            hid_t fapl = H5P.create(H5P.FILE_ACCESS);
+            Assert.IsTrue(fapl >= 0);
+
+            hbool_t is_enabled = 1;
+            string location = "mdc.log";
+            hbool_t start_on_access = 0;
+
             Assert.IsTrue(
-                H5S.select_hyperslab(space, H5S.seloper_t.SET, start, null,
-                count, block) >= 0);
-            Assert.IsTrue(H5S.get_select_hyper_nblocks(space) == 1);
-
-            start[1] = 5;
-            Assert.IsTrue(
-                H5S.select_hyperslab(space, H5S.seloper_t.OR, start, null,
-                count, block) >= 0);
-            Assert.IsTrue(H5S.get_select_hyper_nblocks(space) == 2);
-
-            Assert.IsTrue(H5S.close(space) >= 0);
-        }
-
-        [TestMethod]
-        public void H5Sselect_hyperslabTest2()
-        {
-            Assert.IsFalse(
-                H5S.select_hyperslab(Utilities.RandomInvalidHandle(),
-                H5S.seloper_t.SET, (ulong[])null, null, null, null) >= 0);
+                H5P.set_mdc_log_options(fapl, is_enabled, location,
+                start_on_access) >= 0);
+            
+            Assert.IsTrue(H5P.close(fapl) >= 0);
         }
     }
 }
+
+#endif

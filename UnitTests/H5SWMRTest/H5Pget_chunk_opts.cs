@@ -14,54 +14,34 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using HDF.PInvoke;
 
+using hbool_t = System.UInt32;
 using herr_t = System.Int32;
-using hsize_t = System.UInt64;
-using hssize_t = System.Int64;
+
 
 #if HDF5_VER1_10
+
 using hid_t = System.Int64;
-#else
-using hid_t = System.Int32;
-#endif
 
 namespace UnitTests
 {
-    public partial class H5STest
+    public partial class H5SWMRTest
     {
         [TestMethod]
-        public void H5Sselect_hyperslabTest1()
+        public void H5Pget_chunk_optsTestSWMR1()
         {
-            hsize_t[] dims = { 10, 20, 30 };
-            hid_t space =  H5S.create_simple(dims.Length, dims, dims);
-            Assert.IsTrue(space > 0);
-            hsize_t[] start = { 0, 0, 0 };
-            hsize_t[] count = { 1, 1, 1 };
-            hsize_t[] block = { 1, 2, 3 };
-            Assert.IsTrue(
-                H5S.select_hyperslab(space, H5S.seloper_t.SET, start, null,
-                count, block) >= 0);
-            Assert.IsTrue(H5S.get_select_hyper_nblocks(space) == 1);
+            hid_t dcpl = H5P.create(H5P.DATASET_CREATE);
+            Assert.IsTrue(dcpl >= 0);
 
-            start[1] = 5;
-            Assert.IsTrue(
-                H5S.select_hyperslab(space, H5S.seloper_t.OR, start, null,
-                count, block) >= 0);
-            Assert.IsTrue(H5S.get_select_hyper_nblocks(space) == 2);
-
-            Assert.IsTrue(H5S.close(space) >= 0);
-        }
-
-        [TestMethod]
-        public void H5Sselect_hyperslabTest2()
-        {
-            Assert.IsFalse(
-                H5S.select_hyperslab(Utilities.RandomInvalidHandle(),
-                H5S.seloper_t.SET, (ulong[])null, null, null, null) >= 0);
+            uint opts = 4711;
+            Assert.IsTrue(H5P.get_chunk_opts(dcpl, ref opts) >= 0);
+            
+            Assert.IsTrue(H5P.close(dcpl) >= 0);
         }
     }
 }
+
+#endif

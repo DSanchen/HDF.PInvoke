@@ -14,54 +14,42 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using HDF.PInvoke;
 
 using herr_t = System.Int32;
-using hsize_t = System.UInt64;
-using hssize_t = System.Int64;
 
 #if HDF5_VER1_10
+
 using hid_t = System.Int64;
-#else
-using hid_t = System.Int32;
-#endif
 
 namespace UnitTests
 {
-    public partial class H5STest
+    public partial class H5SWMRTest
     {
         [TestMethod]
-        public void H5Sselect_hyperslabTest1()
+        public void H5Fget_metadata_read_retry_infoTestSWMR1()
         {
-            hsize_t[] dims = { 10, 20, 30 };
-            hid_t space =  H5S.create_simple(dims.Length, dims, dims);
-            Assert.IsTrue(space > 0);
-            hsize_t[] start = { 0, 0, 0 };
-            hsize_t[] count = { 1, 1, 1 };
-            hsize_t[] block = { 1, 2, 3 };
+            H5F.retry_info_t info = new H5F.retry_info_t();
+
+            info.retries0 = new IntPtr(10);
+            info.retries6 = new IntPtr(60);
+            info.retries14 = new IntPtr(140);
+            info.retries20 = new IntPtr(200);
+
             Assert.IsTrue(
-                H5S.select_hyperslab(space, H5S.seloper_t.SET, start, null,
-                count, block) >= 0);
-            Assert.IsTrue(H5S.get_select_hyper_nblocks(space) == 1);
+                H5F.get_metadata_read_retry_info(m_v3_test_file_swmr,
+                ref info) >= 0);
 
-            start[1] = 5;
-            Assert.IsTrue(
-                H5S.select_hyperslab(space, H5S.seloper_t.OR, start, null,
-                count, block) >= 0);
-            Assert.IsTrue(H5S.get_select_hyper_nblocks(space) == 2);
+            Assert.IsTrue(info.nbins == 2);
 
-            Assert.IsTrue(H5S.close(space) >= 0);
-        }
-
-        [TestMethod]
-        public void H5Sselect_hyperslabTest2()
-        {
-            Assert.IsFalse(
-                H5S.select_hyperslab(Utilities.RandomInvalidHandle(),
-                H5S.seloper_t.SET, (ulong[])null, null, null, null) >= 0);
+            Assert.IsTrue(info.retries0 == IntPtr.Zero);
+            Assert.IsTrue(info.retries6 == IntPtr.Zero);
+            Assert.IsTrue(info.retries14 == IntPtr.Zero);
+            Assert.IsTrue(info.retries20 == IntPtr.Zero);
         }
     }
 }
+
+#endif
